@@ -1,0 +1,146 @@
+<head>
+  <title>Wasm mem-share</title>
+</head>
+<body>
+Check console
+<script type="module"> 
+import setupHost from './host.mjs'
+
+const d = new TextDecoder()
+const host = await setupHost()
+
+// TODO: make these work with zip-file
+const wasi_get = () => {
+  const wasi_snapshot_preview1 = {
+    args_get(){},
+    args_sizes_get(){},
+    environ_get(){},
+    environ_sizes_get(){},
+    clock_res_get(){},
+    clock_time_get(){},
+    fd_advise(){},
+    fd_allocate(){},
+    fd_datasync(){},
+    fd_fdstat_set_flags(){},
+    fd_fdstat_set_rights(){},
+    fd_filestat_get(){},
+    fd_filestat_set_size(){},
+    fd_filestat_set_times(){},
+    fd_pread(){},
+    fd_prestat_get(){},
+    fd_prestat_dir_name(){},
+    fd_pwrite(){},
+    fd_read(){},
+    fd_readdir(){},
+    fd_renumber(){},
+    fd_sync(){},
+    fd_tell(){},
+
+    fd_write (fd, iovsPtr, iovsLength, bytesWrittenPtr) {
+      const iovs = new Uint32Array(
+        wasi_snapshot_preview1.wasm.memory.buffer,
+        iovsPtr,
+        iovsLength * 2
+      )
+      if (fd === 1 || fd === 2) {
+        // stdout/stderr
+        let text = ''
+        let totalBytesWritten = 0
+        for (let i = 0; i < iovsLength * 2; i += 2) {
+          const offset = iovs[i]
+          const length = iovs[i + 1]
+          text += wasi_snapshot_preview1.wasm.getString(offset, length)
+          totalBytesWritten += length
+        }
+        wasi_snapshot_preview1.wasm.view.setInt32(bytesWrittenPtr, totalBytesWritten, true)
+
+        // not exactly right, since it will add newlines, but this covers common printf and AS console.log
+        text = text.replace(/\n$/, '')
+        if (text.trim() !== '') {
+          if (fd === 1) {
+            console.log(text)
+          } else {
+            console.error(text)
+          }
+        }
+      }
+      return 0
+    },
+
+    fd_close () {
+      return 0
+    },
+
+    fd_fdstat_get () {
+      return 0
+    },
+
+    fd_seek () {
+      return 0
+    },
+
+    path_create_directory(){},
+    path_filestat_get(){},
+    path_filestat_set_times(){},
+    path_link(){},
+    path_open(){},
+    path_readlink(){},
+    path_remove_directory(){},
+    path_rename(){},
+    path_symlink(){},
+    path_unlink_file(){},
+    poll_oneoff(){},
+    proc_exit(){},
+    sched_yield(){},
+    random_get(){},
+    sock_accept(){},
+    sock_recv(){},
+    sock_send(){},
+    sock_shutdown(){}
+  }
+  return wasi_snapshot_preview1
+}
+
+const cartImports = {
+  measure_text: (f) => host._measure_text(f)
+}
+
+const hShared = host._shared_pointer()
+const cart_wasi = wasi_get()
+const cart = {...(await WebAssembly.instantiateStreaming(fetch("cart.wasm"), {
+  wasi_snapshot_preview1: cart_wasi,
+  host: {
+    setBytes(size) {
+      // copy bytes from cart to host
+      for (let b=0;b<size;b++) {
+        host.HEAPU8[hShared + b] = cart.view.getUint8(cShared + b)
+      }
+    },
+    ...cartImports
+  }
+})).instance.exports}
+cart_wasi.wasm = cart
+host.cart = cart
+cart.view = new DataView(cart.memory.buffer)
+cart.getString = (offset, length) => d.decode(cart.memory.buffer.slice(offset, offset + length))
+const cShared = cart.shared_pointer()
+host.cart_shared_pointer = cShared
+
+if (cart._start) {
+   cart._start()
+}
+
+if (cart.load){
+  cart.load()
+}
+
+if (cart.update){
+  const cartUpdate = () => {
+    cart.update()
+    window.requestAnimationFrame(cartUpdate)
+  }
+  window.requestAnimationFrame(cartUpdate)
+}
+
+</script>
+</body>

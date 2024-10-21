@@ -1,0 +1,18 @@
+syntax = "proto3"
+
+// allows google.protobuf.Empty input/ret type
+import "google/protobuf/empty.proto";
+
+message Dimensions {
+  uint32 width = 1;
+  uint32 height = 2;
+}
+
+service Null0 {
+  rpc measure_text (Req_measure_text) returns (Dimensions) {}
+}
+
+message Req_measure_text {
+  uint32 font = 1;
+  string text = 2;
+}

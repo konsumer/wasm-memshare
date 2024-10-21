@@ -1,0 +1,2 @@
+_measure_text
+_shared_pointer
