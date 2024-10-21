@@ -12,4 +12,4 @@ The example shows:
 ideas:
 
 - I think a union could help with simplifying passing different types
-- protobuf? since it's a plain bytestreeam (no links, etc,) decently fast, and already has a good type & rpc system, it might be pretty nice.
+- protobuf? since it's a plain bytestreeam (no links, etc,) decently fast, and already has a good type & rpc system, it might be pretty nice. There is a lot of tooling around reading proto, so I could auto-gen code from the grpc def.
