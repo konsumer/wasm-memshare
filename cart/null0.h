@@ -1,12 +1,39 @@
 // import this header in your cart
 
-#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #define SHARED_MEM_SIZE 1024*1024
 unsigned char _shared_mem[SHARED_MEM_SIZE] = {0};
 
+// this lets host get the pointer for the shared memory
+__attribute__((export_name("shared_pointer")))
+void* shared_pointer() {
+  return (void*) &_shared_mem;
+}
+
+// copy bytes from cart to host
+__attribute__((import_module("host"), import_name("set_bytes")))
+void __host_set_bytes( unsigned int offset, unsigned int size);
+void host_set_bytes(unsigned int size, unsigned char* value, unsigned int offset){
+  if (size > SHARED_MEM_SIZE) {
+    return;
+  }
+  memcpy(_shared_mem + offset, value, size);
+  __host_set_bytes(offset, size);
+}
+
+// these are the types of functions you can call
+typedef enum {
+  OP_MEASURE_TEXT
+} Op;
+
+// this tells the host to call a function
+__attribute__((import_module("host"), import_name("call")))
+void host_call(Op op);
+
+// shared types
 typedef struct {
   unsigned int width;
   unsigned int height;
@@ -33,50 +60,6 @@ typedef enum GamepadButton {
   GAMEPAD_BUTTON_RIGHT_THUMB,     // Gamepad joystick pressed button right
 } GamepadButton;
 
-// this lets host get the pointer for the shared memory
-__attribute__((export_name("shared_pointer")))
-void* shared_pointer() {
-  return (void*) &_shared_mem;
-}
-
-// copy bytes from cart to host
-__attribute__((import_module("host"), import_name("setBytes")))
-void __host_set_bytes(unsigned int size);
-
-void host_set_bytes(unsigned int size, unsigned char* value){
-  if (size > SHARED_MEM_SIZE) {
-    return;
-  }
-  // copy bytes into &_shared_mem
-  unsigned int i = 0;
-  for (i=0;i<size;i++) {
-    _shared_mem[i] = value[i];
-  }
-  
-  // inform host
-  __host_set_bytes(size);
-}
-
-Dimensions* host_get_dimensions() {
-  Dimensions* out = malloc(sizeof(Dimensions));
-  memcpy(out, &_shared_mem, sizeof(Dimensions));
-  return out;
-}
-
-void host_set_string(char* text) {
-  host_set_bytes(strlen(text), (unsigned char*)text);
-}
-
-__attribute__((import_module("host"), import_name("measure_text")))
-void __host_measure_text(unsigned int font);
-
-Dimensions* measure_text(unsigned int font, char* text) {
-  host_set_string(text);
-  __host_measure_text(font);
-  return host_get_dimensions();
-}
-
-
 // implement these in yur cart
 
 __attribute__((export_name("load")))
@@ -90,3 +73,20 @@ void buttonUp(GamepadButton button);
 
 __attribute__((export_name("buttonDown")))
 void buttonDown(GamepadButton button);
+
+// the actual interface (in cart)
+
+Dimensions measure_text(unsigned int font, char* text) {
+  // serialize input into _shared_mem, as bytes
+  host_set_bytes(sizeof(int), (unsigned char*) &font, 0);
+  host_set_bytes(strlen(text) + 1, (unsigned char*) text, sizeof(int));
+
+  host_call(OP_MEASURE_TEXT);
+  
+  // copy return out of _shared_mem, as Dimensions and return it
+  Dimensions* out = malloc(sizeof(Dimensions));
+  memcpy(out, &_shared_mem, sizeof(Dimensions));
+  return *out;
+}
+
+
