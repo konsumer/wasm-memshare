@@ -12,6 +12,7 @@ host.shared_loc = host._shared_pointer()
 
 const cart_wasi = new WasiPreview1()
 const cart = {...(await WebAssembly.instantiateStreaming(fetch("cart.wasm"), {
+  // these will also need to be exposed to cart, in WAMR
   wasi_snapshot_preview1: cart_wasi,
   host:{
     call: op => host._call(op),
