@@ -24,25 +24,28 @@ const cart = {...(await WebAssembly.instantiateStreaming(fetch("cart.wasm"), {
     }
   }
 })).instance.exports}
+if (cart._start) {
+  cart._start()
+}
+
 cart.shared_loc = cart.shared_pointer()
 cart_wasi.setWasm(cart)
 host.cart = cart
-
-if (cart._start) {
-   cart._start()
-}
 
 if (cart.load){
   cart.load()
 }
 
-if (cart.update){
-  const cartUpdate = () => {
-    cart.update()
-    window.requestAnimationFrame(cartUpdate)
-  }
-  window.requestAnimationFrame(cartUpdate)
-}
+// if (cart.update){
+//   const cartUpdate = () => {
+//     cart.update()
+//     window.requestAnimationFrame(cartUpdate)
+//   }
+//   window.requestAnimationFrame(cartUpdate)
+// }
+
+
+
 
 </script>
 </body>
