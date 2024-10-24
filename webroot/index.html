@@ -24,6 +24,7 @@ const cart = {...(await WebAssembly.instantiateStreaming(fetch("cart.wasm"), {
     }
   }
 })).instance.exports}
+cart.shared_loc = cart.shared_pointer()
 cart_wasi.setWasm(cart)
 host.cart = cart
 

@@ -27,7 +27,6 @@ export class WasiPreview1 {
   setWasm (wasm) {
     this.wasm = wasm
     this.wasm.view = new DataView(this.wasm.memory.buffer)
-    this.wasm.shared_loc = this.wasm.shared_pointer()
 
     // add some string-utils
 
