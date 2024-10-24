@@ -1,0 +1,17 @@
+{
+  "name": "cartas",
+  "version": "0.0.0",
+  "private": true,
+  "main": "index.js",
+  "scripts": {
+    "build:debug": "cat src/null0.ts src/index.ts > /tmp/tmp.ts && asc /tmp/tmp.ts --target debug",
+    "build:release": "cat src/null0.ts src/index.ts > /tmp/tmp.ts && asc /tmp/tmp.ts --target release && rm -f ../webroot/cartas.wat ../webroot/cartas.d.ts ../webroot/cartas.wasm.map ../webroot/cartas.js"
+  },
+  "devDependencies": {
+    "assemblyscript": "^0.27.30"
+  },
+  "type": "module",
+  "dependencies": {
+    "@assemblyscript/wasi-shim": "^0.1.0"
+  }
+}
