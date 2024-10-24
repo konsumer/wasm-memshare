@@ -70,7 +70,6 @@ void set_Dimensions_ret(Dimensions value){
 char* get_string_arg() {
   unsigned int l = strlen((char*)&_shared_mem + cart_shared_arg_offset) + 1;
   char* ret = (char*)&_shared_mem + cart_shared_arg_offset;
-  printf("get_string_arg: %u: %s\n", l, ret);
   cart_shared_arg_offset += l;
   return ret;
 }
@@ -87,7 +86,6 @@ Dimensions get_Dimensions_arg() {
 
 // mock-function that might be called by this interface
 Dimensions null0_measure_text(unsigned int font, char* text){
-  printf("HOST null0_measure_text(%u, %s)\n", font, text);
   Dimensions ret = {.width=100, .height=200};
   return ret;
 }
