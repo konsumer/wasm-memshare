@@ -62,7 +62,7 @@ void add_u32_ret(unsigned int value){
   copy_bytes_to_cart((void*)&value, cart_shared_ret_offset, sizeof(value));
   cart_shared_ret_offset += sizeof(value);
 }
-void add_Dimensions_ret(Dimensions value){
+void set_Dimensions_ret(Dimensions value){
   copy_bytes_to_cart((void*)&value, cart_shared_ret_offset, sizeof(value));
   cart_shared_ret_offset += sizeof(value);
 }
@@ -104,7 +104,7 @@ void call(Op op) {
 
   switch(op) {
     case OP_MEASURE_TEXT:
-      add_Dimensions_ret(null0_measure_text(get_u32_arg(), get_string_arg()));
+      set_Dimensions_ret(null0_measure_text(get_u32_arg(), get_string_arg()));
       break;
     default:
       fprintf(stderr, "Unknown op: %d\n", op);
