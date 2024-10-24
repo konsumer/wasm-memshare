@@ -6,35 +6,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#define SHARED_MEM_SIZE 1024*1024
-unsigned char _shared_mem[SHARED_MEM_SIZE] = {0};
-
-// this lets host get the pointer for the shared memory
-__attribute__((export_name("shared_pointer")))
-void* shared_pointer() {
-  return (void*) &_shared_mem;
-}
-
-// copy bytes from cart to host
-__attribute__((import_module("host"), import_name("set_bytes")))
-void __host_set_bytes( unsigned int offset, unsigned int size);
-void host_set_bytes(unsigned int size, unsigned char* value, unsigned int offset){
-  if (size > SHARED_MEM_SIZE) {
-    return;
-  }
-  memcpy(_shared_mem + offset, value, size);
-  __host_set_bytes(offset, size);
-}
-
-// these are the types of functions you can call
-typedef enum {
-  OP_MEASURE_TEXT
-} Op;
-
-// this tells the host to call a function
-__attribute__((import_module("host"), import_name("call")))
-void host_call(Op op);
-
 // shared types
 typedef struct {
   unsigned int width;
@@ -62,6 +33,54 @@ typedef enum GamepadButton {
   GAMEPAD_BUTTON_RIGHT_THUMB,     // Gamepad joystick pressed button right
 } GamepadButton;
 
+#define SHARED_MEM_SIZE 1024*1024
+unsigned char _shared_mem[SHARED_MEM_SIZE] = {0};
+
+// this lets host get the pointer for the shared memory
+__attribute__((export_name("shared_pointer")))
+void* shared_pointer() {
+  return (void*) &_shared_mem;
+}
+
+// copy bytes from cart to host
+__attribute__((import_module("host"), import_name("set_bytes")))
+void __host_set_bytes( unsigned int offset, unsigned int size);
+void host_set_bytes(unsigned int size, unsigned char* value, unsigned int offset){
+  if (size > SHARED_MEM_SIZE) {
+    return;
+  }
+  memcpy(_shared_mem + offset, value, size);
+  __host_set_bytes(offset, size);
+}
+
+unsigned int cart_shared_arg_offset = 0;
+unsigned int cart_shared_ret_offset = 0;
+
+void set_u32_arg(unsigned int value) {
+  host_set_bytes(sizeof(int), (unsigned char*)&value, cart_shared_arg_offset);
+  cart_shared_arg_offset += sizeof(int);
+}
+void set_string_arg(char* value) {
+  unsigned int len = strlen(value);
+  host_set_bytes(len+1, (unsigned char*)value, cart_shared_arg_offset);
+  cart_shared_arg_offset += len+1;
+}
+Dimensions get_Dimensions_ret() {
+  Dimensions out = {0};
+  memcpy(&out, _shared_mem + cart_shared_ret_offset, sizeof(Dimensions));
+  cart_shared_ret_offset += sizeof(Dimensions);
+  return out; 
+}
+
+// these are the types of functions you can call
+typedef enum {
+  OP_MEASURE_TEXT
+} Op;
+
+// this tells the host to call a function
+__attribute__((import_module("host"), import_name("call")))
+void host_call(Op op);
+
 // implement these in yur cart
 
 __attribute__((export_name("load")))
@@ -79,16 +98,10 @@ void buttonDown(GamepadButton button);
 // the actual interface (in cart)
 
 Dimensions measure_text(unsigned int font, char* text) {
-  // serialize input into _shared_mem, as bytes
-  host_set_bytes(sizeof(int), (unsigned char*) &font, 0);
-  host_set_bytes(strlen(text) + 1, (unsigned char*) text, sizeof(int));
-
+  set_u32_arg(font);
+  set_string_arg(text);
   host_call(OP_MEASURE_TEXT);
-  
-  // copy return out of _shared_mem, as Dimensions and return it
-  Dimensions* out = malloc(sizeof(Dimensions));
-  memcpy(out, &_shared_mem, sizeof(Dimensions));
-  return *out;
+  return get_Dimensions_ret();
 }
 
 
