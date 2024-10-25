@@ -36,13 +36,13 @@ async function setupCart(url, host){
   return cart
 }
 
-
+console.log('CART C')
 const hostc = await setupHost()
-const hostas = await setupHost()
+const cartc = await setupCart("cart.wasm", hostc)
 
-const [cartc, cartas] = await Promise.all([
-  setupCart("cart.wasm", hostc),
-  setupCart("cartas.wasm", hostas)
-])
+console.log('CART AS')
+const hostas = await setupHost()
+const cartas = await setupCart("cartas.wasm", hostas)
+
 </script>
 </body>

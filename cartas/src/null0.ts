@@ -36,16 +36,10 @@ function set_u32_arg(value:u32):void {
 }
 
 function set_string_arg(value:string):void {
-  const l:u32 = value.length + 1
-  const b = String.UTF8.encode(value, true)
-  console.log(typeof b)
-  let c:u32 = 0
-  // for (c=0;c<l;c++) {
-  //   _shared_mem[cart_shared_arg_offset + c]=b.buffer[c]
-  // }
-  console.log(`set_string_arg: ${ _shared_mem.slice(cart_shared_arg_offset + c, cart_shared_arg_offset + c+l).toString()}`)
-  host_set_bytes(cart_shared_arg_offset, l)
-  cart_shared_arg_offset += l
+  const b:Uint8Array = changetype<Uint8Array>(String.UTF8.encode(value, true))
+  _shared_mem.set(b, cart_shared_arg_offset)
+  host_set_bytes(cart_shared_arg_offset, b.byteLength)
+  cart_shared_arg_offset += b.byteLength
 }
 
 function get_Dimensions_ret(): Dimensions {
