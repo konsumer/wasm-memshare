@@ -30,13 +30,11 @@ let cart_shared_ret_offset:u32 = 0
 
 function set_u32_arg(value:u32):void {
   store<usize>(changetype<usize>(_shared_mem) + cart_shared_arg_offset, changetype<usize>(value))
-  console.log(`set_u32_arg: ${value.toString()}`)
   host_set_bytes(cart_shared_arg_offset, 4)
   cart_shared_arg_offset += 4
 }
 
 function set_string_arg(value:string):void {
-  console.log(`set_string_arg: ${value}`)
   const b = Uint8Array.wrap(String.UTF8.encode(value, true))
   Uint8Array.wrap(_shared_mem).set(b, cart_shared_arg_offset)
   host_set_bytes(cart_shared_arg_offset, b.byteLength)

@@ -71,13 +71,11 @@ char* get_string_arg() {
   unsigned int l = strlen((char*)&_shared_mem + cart_shared_arg_offset) + 1;
   char* ret = (char*)&_shared_mem + cart_shared_arg_offset;
   cart_shared_arg_offset += l;
-  printf("get_string_arg: %s\n", ret);
   return ret;
 }
 unsigned int get_u32_arg() {
   unsigned int* ret = (unsigned int*)copy_bytes_from_cart(cart_shared_arg_offset, sizeof(int));
   cart_shared_arg_offset += sizeof(int);
-  printf("get_u32_arg: %u\n", *ret);
   return *ret;
 }
 Dimensions get_Dimensions_arg() {
