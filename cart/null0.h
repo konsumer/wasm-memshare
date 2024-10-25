@@ -44,7 +44,7 @@ void* shared_pointer() {
 
 // copy bytes from cart to host
 __attribute__((import_module("host"), import_name("set_bytes")))
-void __host_set_bytes( unsigned int offset, unsigned int size);
+void __host_set_bytes(unsigned int offset, unsigned int size);
 void host_set_bytes(unsigned int size, unsigned char* value, unsigned int offset){
   if (size > SHARED_MEM_SIZE) {
     return;

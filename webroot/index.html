@@ -7,45 +7,42 @@ Check console
 import setupHost from './host.mjs'
 import { WasiPreview1 } from './wasi.js'
 
-const host = await setupHost()
-host.shared_loc = host._shared_pointer()
-
-const cart_wasi = new WasiPreview1()
-const cart = {...(await WebAssembly.instantiateStreaming(fetch("cart.wasm"), {
-  // these will also need to be exposed to cart, in WAMR
-  wasi_snapshot_preview1: cart_wasi,
-  host:{
-    call: op => host._call(op),
-    set_bytes: (offset, size) => {
-      // copy mem from cart to host
-      for (let i=0;i<size;i++) {
-        host.HEAPU8[offset + host.shared_loc  + i] = cart.view.getUint8(offset + cart.shared_loc + i)
+async function setupCart(url, host){
+  host.shared_loc = host._shared_pointer()
+  const cart_wasi = new WasiPreview1()
+  const cart = {...(await WebAssembly.instantiateStreaming(fetch(url), {
+    // these will also need to be exposed to cart, in WAMR
+    wasi_snapshot_preview1: cart_wasi,
+    host:{
+      call: op => host._call(op),
+      set_bytes: (offset, size) => {
+        // copy mem from cart to host
+        for (let i=0;i<size;i++) {
+          host.HEAPU8[offset + host.shared_loc  + i] = cart.view.getUint8(offset + cart.shared_loc + i)
+        }
       }
     }
+  })).instance.exports}
+  if (cart._start) {
+    cart._start()
   }
-})).instance.exports}
-if (cart._start) {
-  cart._start()
+  cart.shared_loc = cart.shared_pointer()
+  cart_wasi.setWasm(cart)
+  host.cart = cart
+
+  if (cart.load){
+    cart.load()
+  }
+  return cart
 }
 
-cart.shared_loc = cart.shared_pointer()
-cart_wasi.setWasm(cart)
-host.cart = cart
 
-if (cart.load){
-  cart.load()
-}
+const hostc = await setupHost()
+const hostas = await setupHost()
 
-// if (cart.update){
-//   const cartUpdate = () => {
-//     cart.update()
-//     window.requestAnimationFrame(cartUpdate)
-//   }
-//   window.requestAnimationFrame(cartUpdate)
-// }
-
-
-
-
+const [cartc, cartas] = await Promise.all([
+  setupCart("cart.wasm", hostc),
+  setupCart("cartas.wasm", hostas)
+])
 </script>
 </body>

@@ -53,12 +53,12 @@ typedef struct {
 unsigned int cart_shared_arg_offset = 0;
 unsigned int cart_shared_ret_offset = 0;
 
-void add_string_ret(char* value) {
+void set_string_ret(char* value) {
   unsigned int l = strlen(value);
   copy_bytes_to_cart((void*)value, cart_shared_ret_offset, l);
   cart_shared_ret_offset += l;
 }
-void add_u32_ret(unsigned int value){
+void set_u32_ret(unsigned int value){
   copy_bytes_to_cart((void*)&value, cart_shared_ret_offset, sizeof(value));
   cart_shared_ret_offset += sizeof(value);
 }
@@ -71,11 +71,13 @@ char* get_string_arg() {
   unsigned int l = strlen((char*)&_shared_mem + cart_shared_arg_offset) + 1;
   char* ret = (char*)&_shared_mem + cart_shared_arg_offset;
   cart_shared_arg_offset += l;
+  printf("get_string_arg: %s\n", ret);
   return ret;
 }
 unsigned int get_u32_arg() {
   unsigned int* ret = (unsigned int*)copy_bytes_from_cart(cart_shared_arg_offset, sizeof(int));
   cart_shared_arg_offset += sizeof(int);
+  printf("get_u32_arg: %u\n", *ret);
   return *ret;
 }
 Dimensions get_Dimensions_arg() {
