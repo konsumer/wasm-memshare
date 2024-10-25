@@ -36,10 +36,11 @@ function set_u32_arg(value:u32):void {
 }
 
 function set_string_arg(value:string):void {
-  const b:Uint8Array = changetype<Uint8Array>(String.UTF8.encode(value, true))
+  console.log(`set_string_arg: ${value}`)
+  const b = Uint8Array.wrap(String.UTF8.encode(value, true))
   _shared_mem.set(b, cart_shared_arg_offset)
   host_set_bytes(cart_shared_arg_offset, b.byteLength)
-  cart_shared_arg_offset += b.byteLength
+  cart_shared_arg_offset += b.length
 }
 
 function get_Dimensions_ret(): Dimensions {

@@ -36,11 +36,11 @@ async function setupCart(url, host){
   return cart
 }
 
-console.log('CART C')
-const hostc = await setupHost()
-const cartc = await setupCart("cart.wasm", hostc)
-
-console.log('CART AS')
+// console.log('CART C')
+// const hostc = await setupHost()
+// const cartc = await setupCart("cart.wasm", hostc)
+// 
+// console.log('CART AS')
 const hostas = await setupHost()
 const cartas = await setupCart("cartas.wasm", hostas)
 
