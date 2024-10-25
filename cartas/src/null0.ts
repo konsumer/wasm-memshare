@@ -28,31 +28,37 @@ declare function host_call(op:Op):void
 let cart_shared_arg_offset:u32 = 0
 let cart_shared_ret_offset:u32 = 0
 
-function set_u32_arg(value:u32):void {
-  store<usize>(changetype<usize>(_shared_mem) + cart_shared_arg_offset, changetype<usize>(value))
-  host_set_bytes(cart_shared_arg_offset, 4)
-  cart_shared_arg_offset += 4
+function set_arg<T>(arg: T): void {
+  if (isString<T>()){
+    const b = Uint8Array.wrap(String.UTF8.encode(arg, true))
+    Uint8Array.wrap(_shared_mem).set(b, cart_shared_arg_offset)
+    host_set_bytes(cart_shared_arg_offset, b.byteLength)
+    cart_shared_arg_offset += b.byteLength
+  } else if (isReference<T>()) {
+    memory.copy(changetype<usize>(_shared_mem) + cart_shared_arg_offset, changetype<usize>(arg), offsetof<T>())
+    host_set_bytes(cart_shared_arg_offset, offsetof<T>())
+    cart_shared_arg_offset += offsetof<T>()
+  } else {
+    store<T>(changetype<usize>(_shared_mem) + cart_shared_arg_offset, arg)
+    host_set_bytes(cart_shared_arg_offset, sizeof<T>())
+    cart_shared_arg_offset += sizeof<T>()
+  }
+  console.log(`CART set_arg: ${cart_shared_arg_offset.toString()}`)
 }
 
-function set_string_arg(value:string):void {
-  const b = Uint8Array.wrap(String.UTF8.encode(value, true))
-  Uint8Array.wrap(_shared_mem).set(b, cart_shared_arg_offset)
-  host_set_bytes(cart_shared_arg_offset, b.byteLength)
-  cart_shared_arg_offset += b.length
-}
-
-function get_Dimensions_ret(): Dimensions {
-  const out = new Dimensions()
-  memory.copy(changetype<usize>(out),changetype<usize>(_shared_mem) + cart_shared_ret_offset, 8)
-  cart_shared_ret_offset += 8
-  return out
+function get_ret<T>(): T {
+  const ret = instantiate<T>()
+  memory.copy(changetype<usize>(ret), changetype<usize>(_shared_mem) + cart_shared_ret_offset, offsetof<T>())
+  cart_shared_ret_offset += offsetof<T>()
+  console.log(`CART get_ret: ${offsetof<T>().toString()}`)
+  return ret
 }
 
 function measure_text(font: u32, text: string): Dimensions {
-  set_u32_arg(font)
-  set_string_arg(text)
+  set_arg<u32>(font)
+  set_arg<string>(text)
   host_call(Op.MEASURE_TEXT)
-  return get_Dimensions_ret()
+  return get_ret<Dimensions>()
 }
 
 // CART CODE

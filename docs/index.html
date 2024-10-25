@@ -36,8 +36,11 @@ async function setupCart(url, host){
   return cart
 }
 
+console.log("\nCART C\n\n")
 const hostc = await setupHost()
 const cartc = await setupCart("cart.wasm", hostc)
+
+console.log("\nCART Assemblyscript\n\n")
 
 const hostas = await setupHost()
 const cartas = await setupCart("cartas.wasm", hostas)

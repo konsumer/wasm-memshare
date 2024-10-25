@@ -59,16 +59,20 @@ unsigned int cart_shared_ret_offset = 0;
 void set_u32_arg(unsigned int value) {
   host_set_bytes(sizeof(int), (unsigned char*)&value, cart_shared_arg_offset);
   cart_shared_arg_offset += sizeof(int);
+  printf("CART set_arg: %lu\n", sizeof(int));
 }
 void set_string_arg(char* value) {
   unsigned int len = strlen(value);
   host_set_bytes(len+1, (unsigned char*)value, cart_shared_arg_offset);
   cart_shared_arg_offset += len+1;
+  printf("CART set_arg: %u\n", len+1);
+
 }
 Dimensions get_Dimensions_ret() {
   Dimensions out = {0};
   memcpy(&out, _shared_mem + cart_shared_ret_offset, sizeof(Dimensions));
   cart_shared_ret_offset += sizeof(Dimensions);
+  printf("CART get_ret: %lu\n", sizeof(Dimensions));
   return out; 
 }
 
