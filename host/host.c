@@ -38,7 +38,7 @@ void copy_bytes_to_cart(void* val, unsigned int offset, unsigned int size) {
 // copy actual bytes out of shared-mem (which cart already added)
 unsigned char* copy_bytes_from_cart(unsigned int offset, unsigned int size){
   unsigned char* ret = malloc(size);
-  memcpy(ret,  (unsigned char*) (&_shared_mem + offset), size);
+  memcpy(ret, (unsigned char*) (&_shared_mem + offset), size);
   return ret;
 }
 

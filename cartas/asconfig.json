@@ -11,7 +11,7 @@
       "outFile": "../docs/cartas.wasm",
       "optimizeLevel": 3,
       "shrinkLevel": 0,
-      "sourceMap": true,
+      "sourceMap": false,
       "converge": false,
       "noAssert": false
     }
