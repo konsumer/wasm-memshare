@@ -2,13 +2,13 @@
   "extends": "./node_modules/@assemblyscript/wasi-shim/asconfig.json",
   "targets": {
     "debug": {
-      "outFile": "../webroot/cartas-debug.wasm",
+      "outFile": "../docs/cartas-debug.wasm",
       "textFile": "build/debug.wat",
       "sourceMap": true,
       "debug": true
     },
     "release": {
-      "outFile": "../webroot/cartas.wasm",
+      "outFile": "../docs/cartas.wasm",
       "optimizeLevel": 3,
       "shrinkLevel": 0,
       "sourceMap": true,
