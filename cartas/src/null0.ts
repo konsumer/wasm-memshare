@@ -6,10 +6,10 @@ class Dimensions {
   height:u32;
 }
 
-const _shared_mem = new Uint8Array(1024*1024)
+const _shared_mem = new ArrayBuffer(1024*1024)
 
 // this lets host get the pointer for the shared memory
-export function shared_pointer(): Uint8Array {
+export function shared_pointer(): ArrayBuffer {
   return _shared_mem
 }
 
@@ -38,14 +38,14 @@ function set_u32_arg(value:u32):void {
 function set_string_arg(value:string):void {
   console.log(`set_string_arg: ${value}`)
   const b = Uint8Array.wrap(String.UTF8.encode(value, true))
-  _shared_mem.set(b, cart_shared_arg_offset)
+  Uint8Array.wrap(_shared_mem).set(b, cart_shared_arg_offset)
   host_set_bytes(cart_shared_arg_offset, b.byteLength)
   cart_shared_arg_offset += b.length
 }
 
 function get_Dimensions_ret(): Dimensions {
   const out = new Dimensions()
-  store<usize>(changetype<usize>(out), changetype<usize>(_shared_mem) + cart_shared_ret_offset)
+  memory.copy(changetype<usize>(out),changetype<usize>(_shared_mem) + cart_shared_ret_offset, 8)
   cart_shared_ret_offset += 8
   return out
 }
