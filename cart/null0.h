@@ -66,6 +66,7 @@ void set_string_arg(char* value) {
   host_set_bytes(len+1, (unsigned char*)value, cart_shared_arg_offset);
   cart_shared_arg_offset += len+1;
   printf("CART set_arg: %u\n", len+1);
+  fflush(stdout);
 
 }
 Dimensions get_Dimensions_ret() {
@@ -73,6 +74,7 @@ Dimensions get_Dimensions_ret() {
   memcpy(&out, _shared_mem + cart_shared_ret_offset, sizeof(Dimensions));
   cart_shared_ret_offset += sizeof(Dimensions);
   printf("CART get_ret: %lu\n", sizeof(Dimensions));
+  fflush(stdout);
   return out; 
 }
 
@@ -85,7 +87,7 @@ typedef enum {
 __attribute__((import_module("host"), import_name("call")))
 void host_call(Op op);
 
-// implement these in yur cart
+// implement these in your cart
 
 __attribute__((export_name("load")))
 void load();

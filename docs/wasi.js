@@ -11,13 +11,37 @@ if (w._start) {
 }
 */
 
+const appendBuffer = (buffer1, buffer2) => {
+  const tmp = new Uint8Array(buffer1.byteLength + buffer2.byteLength)
+  tmp.set(new Uint8Array(buffer1), 0)
+  tmp.set(new Uint8Array(buffer2), buffer1.byteLength)
+  return tmp.buffer
+}
+
 const d = new TextDecoder()
+const text_encoder = new TextDecoder()
+
+function stdlogDefault (bytes) {
+  const t = d.decode(bytes).replace(/\n$/g, '')
+  if (t) {
+    console.log(t)
+  }
+}
+
+function stderrDefault (bytes) {
+  const t = d.decode(bytes).replace(/\n$/g, '')
+  if (t) {
+    console.error(t)
+  }
+}
 
 export class WasiPreview1 {
-  constructor (settings = { args: [], env: {}, files: {} }) {
+  constructor (settings = { args: [], env: {}, files: {}, stdlog: stdlogDefault, stderr: stderrDefault }) {
     this.args = settings.args
     this.env = settings.env
     this.files = settings.files
+    this.stdlog = settings.stdlog
+    this.stderr = settings.stderr
 
     // expose this to wasi functions
     this.fd_write = this.fd_write.bind(this)
@@ -43,7 +67,17 @@ export class WasiPreview1 {
     this.wasm.getString = (offset, length = this.wasm.getStringLen()) => d.decode(this.wasm.memory.buffer.slice(offset, offset + length))
   }
 
-  args_get () {}
+  args_get (argv, argvBuf) {
+    this.args.forEach((arg, i) => {
+      this.wasm.view.setUint32(argv + i * 4, argvBuf, true)
+      const variable = text_encoder.encode(`${arg}\0`)
+      this.wasm.view.setUint8(variable, argvBuf)
+      argvBuf += variable.byteLength
+    })
+
+    return 0
+  }
+
   args_sizes_get () {}
   environ_get () {}
   environ_sizes_get () {}
@@ -104,28 +138,24 @@ export class WasiPreview1 {
       iovsPtr,
       iovsLength * 2
     )
-    if (fd === 1 || fd === 2) {
-      // stdout/stderr
-      let text = ''
-      let totalBytesWritten = 0
-      for (let i = 0; i < iovsLength * 2; i += 2) {
-        const offset = iovs[i]
-        const length = iovs[i + 1]
-        text += this.wasm.getString(offset, length)
-        totalBytesWritten += length
-      }
-      this.wasm.view.setInt32(bytesWrittenPtr, totalBytesWritten, true)
-
-      // not exactly right, since it will add newlines, but this covers common printf and AS console.log
-      text = text.replace(/\n$/, '')
-      if (text.trim() !== '') {
-        if (fd === 1) {
-          console.log(text)
-        } else {
-          console.error(text)
-        }
-      }
+    let bytes = new ArrayBuffer()
+    let totalBytesWritten = 0
+    for (let i = 0; i < iovsLength * 2; i += 2) {
+      const offset = iovs[i]
+      const length = iovs[i + 1]
+      bytes = appendBuffer(bytes, this.wasm.memory.buffer.slice(offset, offset + length))
+      totalBytesWritten += length
     }
+    this.wasm.view.setInt32(bytesWrittenPtr, totalBytesWritten, true)
+
+    if (fd === 1) {
+      this.stdlog(bytes)
+    } else if (fd === 2) {
+      this.stderr(bytes)
+    } else {
+      console.log('fd_write:', fd)
+    }
+
     return 0
   }
 }
