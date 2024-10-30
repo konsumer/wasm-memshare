@@ -5,7 +5,7 @@
 Check console
 <script type="module"> 
 import setupHost from './host.mjs'
-import { WasiPreview1 } from './wasi.js'
+import WasiPreview1 from 'https://esm.sh/easywasi'
 
 async function setupCart(url, host){
   host.shared_loc = host._shared_pointer()
@@ -16,18 +16,17 @@ async function setupCart(url, host){
     host:{
       call: op => host._call(op),
       set_bytes: (offset, size) => {
+        const view = new DataView(cart.memory.buffer)
+        const shared_cart = cart.shared_pointer()
+        const shared_host = host._shared_pointer()
         // copy mem from cart to host
         for (let i=0;i<size;i++) {
-          host.HEAPU8[offset + host.shared_loc  + i] = cart.view.getUint8(offset + cart.shared_loc + i)
+          host.HEAPU8[offset + shared_host  + i] = view.getUint8(offset + shared_cart + i)
         }
       }
     }
   })).instance.exports}
-  if (cart._start) {
-    cart._start()
-  }
-  cart.shared_loc = cart.shared_pointer()
-  cart_wasi.setWasm(cart)
+  cart_wasi.start(cart)
   host.cart = cart
 
   if (cart.load){

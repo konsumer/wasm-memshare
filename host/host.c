@@ -20,8 +20,11 @@ void* shared_pointer() {
 #ifdef EMSCRIPTEN
 // from host, copy bytes to cart
 EM_JS(void, __copy_bytes_to_cart, (void* val, unsigned int offset, unsigned int size), {
+  const view = new DataView(Module.cart.memory.buffer);
+  const shared_cart = Module.cart.shared_pointer();
+  const shared_host = Module._shared_pointer();
   for (let i=0;i<size;i++) {
-    Module.cart.view.setUint8(offset + Module.cart.shared_loc + i, Module.HEAPU8[offset + Module.shared_loc  + i])
+   view.setUint8(offset + shared_cart + i, Module.HEAPU8[offset + shared_host  + i]);
   }
 });
 #else
